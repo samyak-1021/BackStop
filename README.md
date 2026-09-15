@@ -90,12 +90,12 @@ was worth running.
 ### 1. Retry, on its own, makes things worse
 
 At a 60% fault rate, adding retries to the baseline **increased** the orphan
-rate and produced 35 double-charges per 200 episodes where there had been
-almost none:
+rate, and nearly tripled the number of customers charged twice — from 12 per
+200 episodes to 35:
 
 | Config (fault rate 60%) | Correct | Orphans | Double charges |
 |---|---:|---:|---:|
-| baseline | 23.0% | 52.0% | ~0 |
+| baseline | 23.0% | 52.0% | 12 |
 | **+ retries only** | 30.0% | **60.0%** | **35** |
 | + idempotency only | 27.5% | 41.0% | 0 |
 | retries + idempotency | 84.0% | 4.5% | 0 |
@@ -198,6 +198,8 @@ because the precondition layer refuses the action:
 
 | Policy | Fault rate | Correct | Orphans |
 |---|---:|---:|---:|
+| notify last | 0% | 100.0% | 0.0% |
+| notify before ship | 0% | 15.5% | **0.0%** |
 | notify last | 45% | 97.5% | 0.0% |
 | notify before ship | 45% | 15.5% | **0.0%** |
 | notify last | 60% | 88.5% | 0.5% |
@@ -333,7 +335,7 @@ assume the second thing was done.
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest -q                             # 121 tests
+pytest -q                             # 131 tests
 python scripts/demo.py --seed 17 --fault-rate 0.4 --compare
 python scripts/run_sweep.py           # the full measurement -> results/results.json
 python scripts/make_chart.py          # redraw the curves from results.json
@@ -351,7 +353,7 @@ else.
 
 ## Tests
 
-121 tests, in four layers:
+131 tests, in four layers:
 
 - **The verifier is tested hardest**, because it defines correctness for
   everything else. Each orphan kind is deliberately constructed and asserted to
@@ -367,6 +369,16 @@ else.
 - **Policy independence** — the random-policy suite described above, which is
   what turns "the runtime is safe" from a claim about this policy into a claim
   about the runtime.
+
+There is also a fifth thing, which is not a test of the code:
+`tests/test_readme_matches_results.py` parses this document and checks every
+figure in every table above against `results/results.json`. A README table is a
+promise that some program produced those numbers, and that promise decays
+silently — an experiment gets re-run, a bug gets fixed, and the prose keeps
+saying what it said in the first draft. Here a stale figure is a failing test
+with the claimed and actual values printed side by side. It also checks the
+claims made in prose rather than in a table, including the *explanation* of
+finding 7 and not merely its numbers.
 
 ## Layout
 

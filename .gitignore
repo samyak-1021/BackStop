@@ -8,3 +8,4 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+results/smoke.json

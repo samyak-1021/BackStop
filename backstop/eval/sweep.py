@@ -52,6 +52,17 @@ class Metrics:
     median_tool_calls: float
     median_retries: float
     orphan_kinds: dict[str, int] = field(default_factory=dict)
+    # How episodes ended. Recorded because the interesting claims about the
+    # runtime are about *which* ending it chose — rolling forward past an
+    # irreversible step, or escalating rather than unwinding one — and a claim
+    # that lives only in prose is a claim nobody can re-check.
+    rolled_forward: int = 0
+    escalated: int = 0
+    gave_up: int = 0
+    # Orders that could actually be fulfilled. The rest are impossible by
+    # construction, and declining them is the correct answer — so any
+    # correctness figure has to be read against this number.
+    satisfiable: int = 0
 
     @property
     def correct_rate(self) -> float:
@@ -85,6 +96,10 @@ def summarise(label: str, fault_rate: float, outcomes: list[EpisodeOutcome]) -> 
         median_tool_calls=median([o.result.tool_calls for o in outcomes] or [0]),
         median_retries=median([o.result.retries for o in outcomes] or [0]),
         orphan_kinds=dict(kinds),
+        rolled_forward=sum(o.result.rolled_forward for o in outcomes),
+        escalated=sum(o.result.escalated for o in outcomes),
+        gave_up=sum(o.result.gave_up for o in outcomes),
+        satisfiable=sum(o.scenario.satisfiable for o in outcomes),
     )
 
 

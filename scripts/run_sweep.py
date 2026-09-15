@@ -47,7 +47,7 @@ def show(metrics: Metrics) -> None:
     )
 
 
-async def main(episodes: int) -> None:
+async def main(episodes: int, out: Path) -> None:
     started = time.monotonic()
     seeds = range(episodes)
     policy = ScriptedPolicy()
@@ -106,8 +106,12 @@ async def main(episodes: int) -> None:
     results["point_of_no_return"] = pnr_rows
 
     print("=== 3b. Ordering: irreversible action early vs late ===")
+    # 0.0 is included on purpose. The eager ordering is refused by the
+    # precondition layer whether or not anything is broken, and a zero-fault row
+    # is the only way to show that its score is a property of the ordering
+    # rather than of the faults.
     ordering_rows = []
-    for rate in (0.45, STRESS_RATE):
+    for rate in (0.0, 0.45, STRESS_RATE):
         for label, chosen in (
             ("notify last", ScriptedPolicy()),
             ("notify before ship", EagerPolicy()),
@@ -132,7 +136,6 @@ async def main(episodes: int) -> None:
 
     elapsed = time.monotonic() - started
     results["elapsed_seconds"] = round(elapsed, 1)
-    out = Path("results/results.json")
     write_results(out, results)
     print(f"\nWrote {out} in {elapsed:.1f}s")
 
@@ -140,5 +143,9 @@ async def main(episodes: int) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=200)
+    # A short sweep is a smoke test of the pipeline, not a measurement, and it
+    # must not overwrite the published numbers the README is checked against.
+    # CI runs one on every push and writes it here instead.
+    parser.add_argument("--out", type=Path, default=Path("results/results.json"))
     args = parser.parse_args()
-    asyncio.run(main(args.episodes))
+    asyncio.run(main(args.episodes, args.out))

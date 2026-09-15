@@ -23,6 +23,10 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 31,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -38,6 +42,10 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 31,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -55,9 +63,13 @@
       "orphan_kinds": {
         "dangling_authorization": 4,
         "leaked_stock": 6,
-        "incomplete_completion": 1,
-        "double_charge": 1
+        "double_charge": 1,
+        "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 37,
+      "satisfiable": 169,
       "correct_rate": 0.925,
       "orphan_rate": 0.05
     },
@@ -73,6 +85,10 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 31,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -88,12 +104,16 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 14,
         "money_taken_nothing_shipped": 1,
-        "incomplete_completion": 3,
+        "leaked_stock": 14,
         "double_charge": 3,
+        "incomplete_completion": 3,
         "dangling_authorization": 4
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 42,
+      "satisfiable": 169,
       "correct_rate": 0.855,
       "orphan_rate": 0.1
     },
@@ -109,6 +129,10 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 31,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -127,9 +151,13 @@
         "leaked_stock": 31,
         "money_taken_nothing_shipped": 5,
         "dangling_authorization": 13,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.7,
       "orphan_rate": 0.215
     },
@@ -145,6 +173,10 @@
       "median_tool_calls": 7.0,
       "median_retries": 1.0,
       "orphan_kinds": {},
+      "rolled_forward": 1,
+      "escalated": 0,
+      "gave_up": 32,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -166,6 +198,10 @@
         "double_charge": 9,
         "incomplete_completion": 4
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 96,
+      "satisfiable": 169,
       "correct_rate": 0.555,
       "orphan_rate": 0.315
     },
@@ -181,6 +217,10 @@
       "median_tool_calls": 7.0,
       "median_retries": 1.0,
       "orphan_kinds": {},
+      "rolled_forward": 1,
+      "escalated": 0,
+      "gave_up": 32,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -202,6 +242,10 @@
         "double_charge": 12,
         "incomplete_completion": 2
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 145,
+      "satisfiable": 169,
       "correct_rate": 0.375,
       "orphan_rate": 0.405
     },
@@ -217,6 +261,10 @@
       "median_tool_calls": 9.0,
       "median_retries": 3.0,
       "orphan_kinds": {},
+      "rolled_forward": 2,
+      "escalated": 0,
+      "gave_up": 38,
+      "satisfiable": 169,
       "correct_rate": 0.975,
       "orphan_rate": 0.0
     },
@@ -238,6 +286,10 @@
         "double_charge": 12,
         "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.23,
       "orphan_rate": 0.52
     },
@@ -255,6 +307,10 @@
       "orphan_kinds": {
         "false_notification": 1
       },
+      "rolled_forward": 17,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.885,
       "orphan_rate": 0.005
     },
@@ -276,6 +332,10 @@
         "money_taken_nothing_shipped": 21,
         "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 196,
+      "satisfiable": 169,
       "correct_rate": 0.165,
       "orphan_rate": 0.555
     },
@@ -293,6 +353,10 @@
       "orphan_kinds": {
         "false_notification": 5
       },
+      "rolled_forward": 14,
+      "escalated": 3,
+      "gave_up": 123,
+      "satisfiable": 169,
       "correct_rate": 0.615,
       "orphan_rate": 0.025
     }
@@ -313,9 +377,13 @@
         "leaked_stock": 31,
         "money_taken_nothing_shipped": 5,
         "dangling_authorization": 13,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.7,
       "orphan_rate": 0.215
     },
@@ -333,9 +401,13 @@
       "orphan_kinds": {
         "leaked_stock": 27,
         "dangling_authorization": 11,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 52,
+      "satisfiable": 169,
       "correct_rate": 0.735,
       "orphan_rate": 0.2
     },
@@ -351,10 +423,14 @@
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 11,
         "money_taken_nothing_shipped": 6,
+        "leaked_stock": 11,
         "dangling_authorization": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 61,
+      "satisfiable": 169,
       "correct_rate": 0.865,
       "orphan_rate": 0.06
     },
@@ -373,9 +449,13 @@
         "leaked_stock": 31,
         "money_taken_nothing_shipped": 5,
         "dangling_authorization": 13,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.7,
       "orphan_rate": 0.215
     },
@@ -394,9 +474,13 @@
         "leaked_stock": 27,
         "shipped_without_payment": 14,
         "dangling_authorization": 10,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 7,
+      "escalated": 1,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.715,
       "orphan_rate": 0.26
     },
@@ -415,9 +499,13 @@
         "leaked_stock": 31,
         "money_taken_nothing_shipped": 5,
         "dangling_authorization": 13,
-        "incomplete_completion": 5,
-        "double_charge": 6
+        "double_charge": 6,
+        "incomplete_completion": 5
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.7,
       "orphan_rate": 0.215
     },
@@ -434,10 +522,14 @@
       "median_retries": 0.0,
       "orphan_kinds": {
         "leaked_stock": 15,
-        "incomplete_completion": 5,
         "double_charge": 6,
+        "incomplete_completion": 5,
         "dangling_authorization": 8
       },
+      "rolled_forward": 7,
+      "escalated": 1,
+      "gave_up": 69,
+      "satisfiable": 169,
       "correct_rate": 0.715,
       "orphan_rate": 0.135
     },
@@ -453,6 +545,10 @@
       "median_tool_calls": 7.0,
       "median_retries": 1.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 32,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -468,6 +564,10 @@
       "median_tool_calls": 7.0,
       "median_retries": 1.0,
       "orphan_kinds": {},
+      "rolled_forward": 1,
+      "escalated": 0,
+      "gave_up": 32,
+      "satisfiable": 169,
       "correct_rate": 1.0,
       "orphan_rate": 0.0
     },
@@ -489,6 +589,10 @@
         "double_charge": 12,
         "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.23,
       "orphan_rate": 0.52
     },
@@ -510,6 +614,10 @@
         "incomplete_completion": 15,
         "money_taken_nothing_shipped": 2
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 122,
+      "satisfiable": 169,
       "correct_rate": 0.3,
       "orphan_rate": 0.6
     },
@@ -525,10 +633,14 @@
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 73,
         "dangling_authorization": 30,
+        "leaked_stock": 73,
         "money_taken_nothing_shipped": 23
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 180,
+      "satisfiable": 169,
       "correct_rate": 0.275,
       "orphan_rate": 0.41
     },
@@ -550,6 +662,10 @@
         "double_charge": 12,
         "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.23,
       "orphan_rate": 0.52
     },
@@ -572,6 +688,10 @@
         "incomplete_completion": 3,
         "money_taken_nothing_shipped": 11
       },
+      "rolled_forward": 8,
+      "escalated": 2,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.235,
       "orphan_rate": 0.495
     },
@@ -593,6 +713,10 @@
         "double_charge": 12,
         "incomplete_completion": 1
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.23,
       "orphan_rate": 0.52
     },
@@ -614,6 +738,10 @@
         "leaked_stock": 8,
         "money_taken_nothing_shipped": 3
       },
+      "rolled_forward": 8,
+      "escalated": 2,
+      "gave_up": 181,
+      "satisfiable": 169,
       "correct_rate": 0.235,
       "orphan_rate": 0.14
     },
@@ -633,6 +761,10 @@
         "dangling_authorization": 5,
         "money_taken_nothing_shipped": 2
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.84,
       "orphan_rate": 0.045
     },
@@ -650,6 +782,10 @@
       "orphan_kinds": {
         "false_notification": 1
       },
+      "rolled_forward": 17,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.885,
       "orphan_rate": 0.005
     }
@@ -670,6 +806,10 @@
         "incomplete_completion": 2,
         "false_notification": 2
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 38,
+      "satisfiable": 169,
       "correct_rate": 0.965,
       "orphan_rate": 0.01
     },
@@ -685,6 +825,10 @@
       "median_tool_calls": 9.0,
       "median_retries": 3.0,
       "orphan_kinds": {},
+      "rolled_forward": 2,
+      "escalated": 0,
+      "gave_up": 38,
+      "satisfiable": 169,
       "correct_rate": 0.975,
       "orphan_rate": 0.0
     },
@@ -703,6 +847,10 @@
         "false_notification": 18,
         "incomplete_completion": 8
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.8,
       "orphan_rate": 0.09
     },
@@ -720,6 +868,10 @@
       "orphan_kinds": {
         "false_notification": 1
       },
+      "rolled_forward": 17,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.885,
       "orphan_rate": 0.005
     },
@@ -738,6 +890,10 @@
         "false_notification": 22,
         "incomplete_completion": 7
       },
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 123,
+      "satisfiable": 169,
       "correct_rate": 0.54,
       "orphan_rate": 0.11
     },
@@ -755,11 +911,53 @@
       "orphan_kinds": {
         "false_notification": 5
       },
+      "rolled_forward": 14,
+      "escalated": 3,
+      "gave_up": 123,
+      "satisfiable": 169,
       "correct_rate": 0.615,
       "orphan_rate": 0.025
     }
   ],
   "ordering": [
+    {
+      "label": "notify last",
+      "fault_rate": 0.0,
+      "episodes": 200,
+      "correct": 200,
+      "fulfilled": 169,
+      "orphaned": 0,
+      "clean_failures": 31,
+      "faults_injected": 0,
+      "median_tool_calls": 6.0,
+      "median_retries": 0.0,
+      "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 31,
+      "satisfiable": 169,
+      "correct_rate": 1.0,
+      "orphan_rate": 0.0
+    },
+    {
+      "label": "notify before ship",
+      "fault_rate": 0.0,
+      "episodes": 200,
+      "correct": 31,
+      "fulfilled": 0,
+      "orphaned": 0,
+      "clean_failures": 200,
+      "faults_injected": 0,
+      "median_tool_calls": 7.0,
+      "median_retries": 0.0,
+      "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 200,
+      "satisfiable": 169,
+      "correct_rate": 0.155,
+      "orphan_rate": 0.0
+    },
     {
       "label": "notify last",
       "fault_rate": 0.45,
@@ -772,6 +970,10 @@
       "median_tool_calls": 9.0,
       "median_retries": 3.0,
       "orphan_kinds": {},
+      "rolled_forward": 2,
+      "escalated": 0,
+      "gave_up": 38,
+      "satisfiable": 169,
       "correct_rate": 0.975,
       "orphan_rate": 0.0
     },
@@ -787,6 +989,10 @@
       "median_tool_calls": 10.0,
       "median_retries": 3.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 200,
+      "satisfiable": 169,
       "correct_rate": 0.155,
       "orphan_rate": 0.0
     },
@@ -804,6 +1010,10 @@
       "orphan_kinds": {
         "false_notification": 1
       },
+      "rolled_forward": 17,
+      "escalated": 0,
+      "gave_up": 71,
+      "satisfiable": 169,
       "correct_rate": 0.885,
       "orphan_rate": 0.005
     },
@@ -819,6 +1029,10 @@
       "median_tool_calls": 12.0,
       "median_retries": 5.0,
       "orphan_kinds": {},
+      "rolled_forward": 0,
+      "escalated": 0,
+      "gave_up": 200,
+      "satisfiable": 169,
       "correct_rate": 0.155,
       "orphan_rate": 0.0
     }
@@ -861,5 +1075,5 @@
       "score": 1.0
     }
   ],
-  "elapsed_seconds": 1069.4
+  "elapsed_seconds": 1168.4
 }
