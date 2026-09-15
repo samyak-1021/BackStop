@@ -45,6 +45,11 @@ class RuntimeConfig:
     respect_retry_after: bool = False
     validate_responses: bool = False
     compensate_on_failure: bool = False
+    # Reject actions whose prerequisites are not met, before they reach a tool.
+    # Retries and compensation defend against the *tools* misbehaving; this
+    # defends against the *agent* misbehaving, which is a different threat and
+    # the one you actually have when a model is driving.
+    enforce_preconditions: bool = False
     # Before unwinding, read back what the world says actually happened and
     # rebuild the saga from that. This is what turns "I think I reserved
     # something but the response was lost" into a compensable, named effect.
@@ -80,6 +85,7 @@ BASELINE = RuntimeConfig(
     validate_responses=False,
     compensate_on_failure=False,
     reconcile=False,
+    enforce_preconditions=False,
 )
 
 RUNTIME = RuntimeConfig(
@@ -89,6 +95,7 @@ RUNTIME = RuntimeConfig(
     validate_responses=True,
     compensate_on_failure=True,
     reconcile=True,
+    enforce_preconditions=True,
 )
 
 
@@ -104,6 +111,8 @@ class EpisodeResult:
     tool_calls: int
     retries: int
     failures: list[str] = field(default_factory=list)
+    # Actions the policy proposed that the runtime refused to perform.
+    blocked: list[str] = field(default_factory=list)
     compensation: CompensationResult | None = None
     effects_recorded: list[str] = field(default_factory=list)
     # The episode got past its irreversible step and could not be completed or
@@ -130,6 +139,7 @@ class EpisodeRunner:
         self._handles: dict[str, str] = {}
         self._completed: list[ActionKind] = []
         self._failures: list[str] = []
+        self._blocked: list[str] = []
 
     # -- compensations ------------------------------------------------------
 
@@ -164,6 +174,54 @@ class EpisodeRunner:
             )
 
         return _do
+
+    # -- preconditions ------------------------------------------------------
+
+    def _blocked_because(self, action: Action) -> str | None:
+        """Why this action must not be performed now, or None if it is fine.
+
+        These are the domain's own invariants, enforced where the agent cannot
+        route around them. Each one corresponds directly to a violation the
+        verifier checks for, which is the point: a harm the verifier can detect
+        should be a harm the runtime can refuse.
+
+        Note what is *not* here. Reserving twice, or authorizing before
+        reserving, is wasteful but harmless and reversible — the runtime does
+        not police inefficiency, only damage.
+        """
+        captured = ActionKind.CAPTURE in self._completed
+        shipped = ActionKind.SHIP in self._completed
+
+        if action.kind is ActionKind.CAPTURE:
+            if "payment_id" not in self._handles:
+                return "cannot capture before authorizing"
+
+        elif action.kind is ActionKind.SHIP:
+            if "reservation_id" not in self._handles:
+                return "cannot ship without a reservation"
+            if not captured:
+                # Prevents `shipped_without_payment`: goods must never leave
+                # before the money is taken.
+                return "cannot ship before the payment is captured"
+
+        elif action.kind is ActionKind.NOTIFY:
+            if not shipped:
+                # Prevents `false_notification`, the irreversible harm. The
+                # customer may only be told the order shipped once it has.
+                return "cannot tell the customer it shipped before it has"
+
+        elif action.kind is ActionKind.COMPLETE:
+            missing = [
+                step
+                for step in (ActionKind.CAPTURE, ActionKind.SHIP, ActionKind.NOTIFY)
+                if step not in self._completed
+            ]
+            if missing:
+                # Prevents `incomplete_completion`: claiming success is not
+                # success, and the runtime will not record the claim.
+                return f"cannot complete without: {', '.join(missing)}"
+
+        return None
 
     # -- actions ------------------------------------------------------------
 
@@ -238,9 +296,10 @@ class EpisodeRunner:
                 },
                 # Likewise: nothing downstream needs the notification id.
             )
-            # No compensation exists. Recorded anyway so the report can say it
-            # happened — an unrecordable effect is an unreportable one.
-            self._saga.record("notify", compensate=None)
+            # No compensation exists, and none ever will. This is the only
+            # genuinely irreversible effect in the domain, and the flag is what
+            # trips the point-of-no-return rule.
+            self._saga.record("notify", compensate=None, irreversible=True)
 
         elif action.kind is ActionKind.COMPLETE:
             await self._tools.call(
@@ -296,6 +355,7 @@ class EpisodeRunner:
             tool_calls=len(self._tools.trace),
             retries=self._tools.retries,
             failures=list(self._failures),
+            blocked=list(self._blocked),
             compensation=compensation,
             effects_recorded=[e.name for e in self._saga.effects],
             escalated=escalated,
@@ -332,7 +392,7 @@ class EpisodeRunner:
                 steps_used=steps,
                 steps_remaining=budget - steps,
             )
-            action = self._policy.next_action(observation)
+            action = await self._policy.next_action(observation)
             steps += 1
 
             if action.kind is ActionKind.GIVE_UP:
@@ -340,6 +400,16 @@ class EpisodeRunner:
                     gave_up = True
                     break
                 action = Action(ActionKind.COMPLETE, reason="forced roll-forward")
+
+            if self._config.enforce_preconditions:
+                blocked = self._blocked_because(action)
+                if blocked is not None:
+                    # Refused before it reaches a tool, so nothing in the world
+                    # changes. Reported to the policy as a failure so it can
+                    # choose differently next time.
+                    self._blocked.append(f"{action.kind}: {blocked}")
+                    self._failures.append(f"blocked {action.kind}: {blocked}")
+                    continue
 
             try:
                 await self._perform(action)
@@ -371,6 +441,10 @@ class EpisodeRunner:
         self._saga.record(
             f"{action.kind}(possibly-applied)",
             compensate=None,
+            # Only a notification is genuinely beyond recall. For everything
+            # else this is uncertainty, not irreversibility: reconciliation can
+            # still find the effect and undo it.
+            irreversible=action.kind is ActionKind.NOTIFY,
             detail={"uncertain": True},
         )
 
@@ -426,7 +500,9 @@ class EpisodeRunner:
 
         for note in effects.get("notifications", []):
             # Recorded so the report sees it; nothing can undo it.
-            rebuilt.record("notify(reconciled)", compensate=None, detail=note)
+            rebuilt.record(
+                "notify(reconciled)", compensate=None, irreversible=True, detail=note
+            )
 
         self._saga = rebuilt
 

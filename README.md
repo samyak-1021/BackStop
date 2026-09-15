@@ -14,6 +14,11 @@ whose every protection is an independent switch — so the question "which of
 these actually prevents which harm?" has a measured answer instead of a
 confident one.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="results/curve-dark.svg">
+  <img alt="Correctness and orphan rate against fault rate, baseline vs runtime" src="results/curve-light.svg">
+</picture>
+
 ---
 
 ## The headline
@@ -29,11 +34,16 @@ mutating call at the given rate.
 | **20%** | **70.0%** | **21.5%** | **100.0%** | **0.0%** | 7 / 1 |
 | 30% | 55.5% | 31.5% | **100.0%** | **0.0%** | 7 / 1 |
 | 45% | 37.5% | 40.5% | 97.5% | 0.0% | 9 / 3 |
-| 60% | 23.0% | 52.0% | 86.5% | 3.5% | 12 / 4 |
-| 75% | 16.5% | 55.5% | 59.5% | 7.0% | 15 / 7 |
+| 60% | 23.0% | 52.0% | 88.5% | 0.5% | 12 / 4 |
+| 75% | 16.5% | 55.5% | 61.5% | 2.5% | 15 / 7 |
 
 > **At a 20% fault rate, correctness goes 70% → 100% and the orphan rate goes
 > 21.5% → 0%, for a median of one extra retry and no extra tool calls.**
+
+The runtime's correctness eventually falls too — at a 75% fault rate a majority
+of calls are broken and some tasks simply cannot be completed. What does *not*
+fall apart is the orphan rate: the failures stay clean. That is the property
+worth buying.
 
 And consistency, which is where unreliable systems really show up —
 `pass^k` is the fraction of task groups where **all k** attempts were correct:
@@ -123,37 +133,103 @@ back is destructive rather than corrective. The only safe moves are to roll
 | 45% | unwinds blindly | 96.5% | 1.0% | 2 |
 | 45% | respects the point of no return | **97.5%** | **0.0%** | **0** |
 | 60% | unwinds blindly | 80.0% | 9.0% | 18 |
-| 60% | respects the point of no return | **86.5%** | **3.5%** | **6** |
+| 60% | respects the point of no return | **88.5%** | **0.5%** | **1** |
 | 75% | unwinds blindly | 54.0% | 11.0% | 22 |
-| 75% | respects the point of no return | **59.5%** | **7.0%** | **12** |
+| 75% | respects the point of no return | **61.5%** | **2.5%** | **5** |
 
-This is why the runtime has a third outcome besides success and rollback.
-At a 75% fault rate, 11 of 200 episodes escalate to a human — which is the
-correct answer when you can neither finish nor safely undo.
+This is why the runtime has outcomes besides success and rollback. At a 60%
+fault rate 17 of 200 episodes roll *forward* — finishing rather than unwinding
+because unwinding was no longer safe — and at 75%, 3 escalate to a human, which
+is the correct answer when you can neither finish nor safely undo.
 
 ### 4. Compensating from your own memory isn't enough
 
 A lost response is precisely the event that corrupts the agent's record of what
-it did. Compensation built on that record misses the effects that matter most.
+it did. Compensation built on that record misses the effects that matter most —
+and at a 20% fault rate, compensating alone is *worse than doing nothing*
+(26.0% orphans against the baseline's 21.5%), because it confidently unwinds the
+half of the story it knows about and leaves the other half standing.
+
 Reconciling first — reading the world back and rebuilding the compensation plan
-from observed state — roughly halves the residual orphans (at 20%: 20.0% → 14.5%
-with compensation alone vs. with reconciliation).
+from observed state — reverses that:
+
+| Config | Orphans @ 20% | Orphans @ 60% |
+|---|---:|---:|
+| baseline | 21.5% | 52.0% |
+| + compensation only | 26.0% | 49.5% |
+| + compensation **and reconciliation** | **13.5%** | **14.0%** |
 
 The runtime does not trust its own log. It asks the world what happened.
 
-### 5. A result that contradicted my hypothesis
+### 5. My fault model had the same bug as my runtime
+
+The injector applies the request before it damages the reply — so a truncated
+body or a renamed field means *the effect happened* and the caller cannot tell.
+An earlier version of `APPLIES_THE_EFFECT` listed only `LOST_RESPONSE` and
+`SLOW`, silently treating those two as no-ops.
+
+The consequence was exactly the harm the point-of-no-return rule exists to
+prevent: a truncated `notify` response meant the customer *had* been emailed,
+the runtime never recorded it, the saga did not know it was past its point of no
+return, and it unwound the shipment. Fixing the set took the runtime's false
+notifications at a 60% fault rate from 6 per 200 episodes to 1.
+
+It was found by a test asserting the runtime is safe against a *random* policy,
+not by reading the code. The lesson I take from it: a fault model is itself
+software, and an incorrect one flatters whatever it is testing.
+
+### 6. "I don't know if it applied" is not the same as "it is irreversible"
+
+The first implementation of the point-of-no-return check inferred
+irreversibility from the absence of a compensating action — and a payment
+capture whose response was lost has no *recorded* compensation, so it read as
+irreversible and suppressed the refund that should have followed.
+
+Uncertainty about whether an effect landed and inability to undo it are
+orthogonal. They are now two separate fields (`Effect.irreversible`, distinct
+from `compensate is None`), and the refund goes out.
+
+### 7. A result that contradicted my hypothesis
 
 I expected to show that performing the irreversible action early (notify before
 ship) produces more unrecoverable orphans. Under the *blind-unwinding* runtime
-it clearly did. Under the fixed, point-of-no-return-aware runtime the effect
-**disappears** — at a 60% fault rate the eager ordering scores 92.5% correct
-against 86.5%, with an identical 3.5% orphan rate.
+it clearly did. Under the finished runtime the harm never happens at all —
+because the precondition layer refuses the action:
 
-The explanation is that committing early forces the runtime into roll-forward
-sooner, and rolling forward is usually the right call. The ordering penalty was
-real, but it was a penalty of the broken recovery logic, not of the ordering.
-Reporting it the other way round would have been the easy version of this
-README.
+| Policy | Fault rate | Correct | Orphans |
+|---|---:|---:|---:|
+| notify last | 45% | 97.5% | 0.0% |
+| notify before ship | 45% | 15.5% | **0.0%** |
+| notify last | 60% | 88.5% | 0.5% |
+| notify before ship | 60% | 15.5% | **0.0%** |
+
+The eager policy scores 15.5% at *every* fault rate, including 0% — that
+figure is just the ~15% of generated orders that are impossible to fulfil, where
+giving up is the correct answer. In other words the runtime blocks it every
+single time: it fulfils essentially no satisfiable order, and it damages nothing.
+
+So the ordering penalty I set out to measure turned out to be a penalty of the
+broken recovery logic, not of the ordering — and the finished runtime converts a
+dangerous agent into a useless one rather than a harmful one. Reporting the
+original hypothesis as confirmed would have been the easy version of this README.
+
+---
+
+## Safety is a property of the runtime, not of a well-behaved agent
+
+The temptation in a project like this is to measure a careful deterministic
+policy, get a clean result, and imply it would hold for a real model. It would
+not follow. So the runtime is also run against a policy that behaves far worse
+than any model plausibly would — random actions, wrong order, repeated steps,
+skipped prerequisites — and the no-orphan invariant has to hold anyway.
+
+It does (`tests/test_llm_policy.py`), and the same suite proves the test is not
+vacuous: the *same* random policy against the baseline does damage the world.
+That is what the `enforce_preconditions` flag buys. Note that it is worth
+**nothing** in the ablation above — identical to baseline at both fault rates —
+because the deterministic policy never proposes a harmful action. It is
+protection against the agent, not against the tools, and only a misbehaving
+agent shows it.
 
 ---
 
@@ -161,9 +237,10 @@ README.
 
 ```
   policy  ──decides──▶  runtime  ──calls──▶  chaos injector  ──▶  world (HTTP + DB)
- (control                (retries,            (deterministic          │
-  or LLM)                 idempotency,         faults, seeded)        │
-                          saga, reconcile)                            ▼
+ (control                (preconditions,      (deterministic          │
+  or LLM)                 retries, idem-       faults, seeded)        │
+                          potency, saga,                              │
+                          reconcile)                                  ▼
                                                                   verifier
                                                           (reads the DB, judges)
 ```
@@ -203,6 +280,7 @@ differ by accident:
 | `idempotency` | duplicate delivery after a lost response |
 | `max_retries`, `respect_retry_after` | transient failures, rate limits |
 | `validate_responses` | schema drift handing you `None` |
+| `enforce_preconditions` | the *agent* proposing harm, not the tools failing |
 | `compensate_on_failure` | half-finished work left in the world |
 | `reconcile` | your own log being wrong |
 | `respect_point_of_no_return` | recovery logic causing the harm |
@@ -210,7 +288,10 @@ differ by accident:
 **The policy** (`backstop/policies/`) decides; it never executes, retries or
 compensates. The default is a deterministic reference policy — an experimental
 *control*, so all variance comes from the injected faults and the protections
-rather than from model sampling.
+rather than from model sampling. `policies/llm.py` is the model-driven seam:
+prompt rendering, tolerant JSON parsing, bounded retries on unparseable replies,
+and a model outage degrading to a clean give-up. It is exercised end-to-end
+against stub and plan-following models.
 
 ---
 
@@ -220,11 +301,11 @@ rather than from model sampling.
 preserves correctness under fault injection is a property of the runtime, not of
 any model, and the deterministic policy measures it cleanly.
 
-**Not yet measured:** how an *LLM* agent behaves when tools misbehave — whether
-it hallucinates success, retries the wrong step, or gets stuck. That needs a
-model API key and is not done. `backstop/policies/base.py` defines the seam a
-LangGraph policy drops into; the world, the faults, the verifier and the metrics
-are all model-agnostic and would not change.
+**Not measured:** how a *real* LLM behaves when tools misbehave — whether it
+hallucinates success, retries the wrong step, or gets stuck. The seam is built
+and tested, and `OpenAICompatibleClient` implements the HTTP call, but it has
+never been run against a live endpoint; that needs an API key. The world, the
+faults, the verifier and the metrics are all model-agnostic and would not change.
 
 I have tried to be exact about this distinction rather than let the reader
 assume the second thing was done.
@@ -240,6 +321,9 @@ assume the second thing was done.
   would move the absolute numbers; the ordering of the configurations is what I
   would expect to hold.
 - SQLite per episode. Fine for isolation, not a claim about scale.
+- The sweep drives the world in-process over an ASGI transport. `scripts/e2e.py`
+  exists to show the same runtime works over real sockets against a real uvicorn
+  process, but the published numbers come from the in-process path.
 
 ---
 
@@ -249,29 +333,40 @@ assume the second thing was done.
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest -q                             # 91 tests
+pytest -q                             # 121 tests
+python scripts/demo.py --seed 17 --fault-rate 0.4 --compare
 python scripts/run_sweep.py           # the full measurement -> results/results.json
-python scripts/run_sweep.py --episodes 500
+python scripts/make_chart.py          # redraw the curves from results.json
+python scripts/e2e.py                 # real uvicorn, real sockets, real DB read-back
 ```
 
-The sweep is ~20 minutes at 200 episodes/cell on a 2-vCPU container. Injected
+The sweep is ~18 minutes at 200 episodes/cell on a 2-vCPU container. Injected
 latency and backoff are scaled to zero during sweeps — the *decisions* are
 exercised, the seconds are not spent.
 
+`scripts/demo.py --compare` is the fastest way to see the point: the same seed
+means the same scenario and the same fault sequence for both arms, so every
+difference in the printed outcome is attributable to the runtime and nothing
+else.
+
 ## Tests
 
-91 tests, in three layers:
+121 tests, in four layers:
 
 - **The verifier is tested hardest**, because it defines correctness for
   everything else. Each orphan kind is deliberately constructed and asserted to
   be caught — including that a *perfect* unwind still leaves a false
   notification, which is the invariant the point-of-no-return rule exists for.
 - **The injector** is tested for determinism, for rate accuracy, and for the
-  property that `LOST_RESPONSE` really does apply the effect before dropping the
-  reply — otherwise the whole idempotency story would be theatre.
+  property that response-damaging faults really do apply the effect before
+  damaging the reply — otherwise the whole idempotency story would be theatre.
+  Finding 5 above is what happens when that set is wrong.
 - **The runtime** tests pin the mechanisms behind each headline number, so a
   regression appears as a named failing test rather than as a percentage
   quietly drifting in a report nobody re-reads.
+- **Policy independence** — the random-policy suite described above, which is
+  what turns "the runtime is safe" from a claim about this policy into a claim
+  about the runtime.
 
 ## Layout
 
@@ -283,6 +378,8 @@ backstop/
 ├── policies/    the decision layer (deterministic control; LLM seam)
 └── eval/        episode harness and metrics
 scripts/run_sweep.py    the full measurement
+scripts/demo.py         one episode, narrated
+scripts/e2e.py          the same runtime over real sockets
 results/results.json    raw numbers behind every table above
 ```
 

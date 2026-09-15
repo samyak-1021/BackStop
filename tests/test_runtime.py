@@ -222,18 +222,48 @@ async def test_respecting_the_point_of_no_return_reduces_the_damage() -> None:
     )
 
 
-async def test_escalation_happens_instead_of_a_destructive_unwind() -> None:
-    """When it cannot finish and must not unwind, it asks for a human.
+async def test_roll_forward_finishes_what_it_cannot_safely_undo() -> None:
+    """Past the point of no return, the runtime pushes through rather than back.
 
-    Escalation is the honest third outcome. A runtime with only "succeed" and
-    "roll back" has to pick one of them even when both are wrong.
+    This is the common outcome once an irreversible action has happened, and it
+    should be: the goods have shipped and the customer has been told, so
+    completing the order is both achievable and correct.
     """
     outcomes = [
-        await run_episode(seed, ScriptedPolicy(), RUNTIME, 0.75, **GOOD)
+        await run_episode(seed, ScriptedPolicy(), RUNTIME, 0.6, **GOOD)
         for seed in range(80)
     ]
-    assert any(o.result.escalated for o in outcomes)
-    assert any(o.result.rolled_forward for o in outcomes)
+    rolled = [o for o in outcomes if o.result.rolled_forward]
+
+    assert rolled, "no episode reached the point of no return at a 60% fault rate"
+    assert all(o.fulfilled for o in rolled), (
+        "a rolled-forward episode should end fulfilled, not half-done"
+    )
+
+
+async def test_escalation_is_the_last_resort_not_the_default() -> None:
+    """When it can neither finish nor safely unwind, it asks for a human.
+
+    Deliberately measured at an extreme fault rate. Escalation is rare by
+    design — if it were common, the runtime would be giving up on work it could
+    have completed — so a gentler rate simply never produces one.
+    """
+    outcomes = [
+        await run_episode(seed, ScriptedPolicy(), RUNTIME, 0.85, **GOOD)
+        for seed in range(200)
+    ]
+    escalated = [o for o in outcomes if o.result.escalated]
+    rolled = [o for o in outcomes if o.result.rolled_forward]
+
+    assert escalated, "no episode escalated even at an 85% fault rate"
+    assert len(escalated) < len(rolled), (
+        "escalation should be rarer than rolling forward — a runtime that "
+        "escalates more often than it finishes is not trying hard enough"
+    )
+    # Whatever it hands to a human, it must not have lied to the customer.
+    assert not any(
+        FALSE_NOTIFICATION in o.orphan_kinds for o in escalated
+    ), "an escalated episode must not also have told the customer something untrue"
 
 
 async def test_impossible_orders_fail_cleanly_not_messily() -> None:

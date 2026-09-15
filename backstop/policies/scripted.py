@@ -63,7 +63,7 @@ class ScriptedPolicy:
     def reset(self) -> None:
         """No per-episode state: the observation carries everything."""
 
-    def next_action(self, observation: Observation) -> Action:
+    async def next_action(self, observation: Observation) -> Action:
         # Out of budget. Stopping deliberately is what lets the runtime unwind
         # while it still has the steps to do it.
         if observation.steps_remaining <= 0:

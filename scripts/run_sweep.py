@@ -72,6 +72,7 @@ async def main(episodes: int) -> None:
         "+ idempotency only": replace(BASELINE, idempotency=True),
         "+ validation only": replace(BASELINE, validate_responses=True),
         "+ compensation only": replace(BASELINE, compensate_on_failure=True),
+        "+ preconditions only": replace(BASELINE, enforce_preconditions=True),
         "+ compensation+reconcile": replace(
             BASELINE, compensate_on_failure=True, reconcile=True
         ),

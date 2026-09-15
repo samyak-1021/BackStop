@@ -69,9 +69,25 @@ DEFAULT_MIX: dict[FaultKind, float] = {
     FaultKind.SLOW: 0.05,
 }
 
-# Faults that let the request reach the world before anything goes wrong.
-# These are the ones where a retry can duplicate a side effect.
-APPLIES_THE_EFFECT = frozenset({FaultKind.LOST_RESPONSE, FaultKind.SLOW})
+# Faults where the request reaches the world and the effect IS applied — only
+# the *reply* is damaged. These are the dangerous ones: the caller sees a
+# failure for a call that actually succeeded.
+#
+# Getting this set wrong is a subtle and expensive mistake. An earlier version
+# listed only LOST_RESPONSE and SLOW, omitting the two body-mangling faults even
+# though the injector applies the request before mangling. The consequence: a
+# truncated `notify` response meant the customer had been emailed, the runtime
+# never recorded it, the saga did not know it was past its point of no return,
+# and it unwound the shipment — manufacturing exactly the irreversible lie the
+# rule exists to prevent.
+APPLIES_THE_EFFECT = frozenset(
+    {
+        FaultKind.LOST_RESPONSE,
+        FaultKind.SLOW,
+        FaultKind.TRUNCATED_BODY,
+        FaultKind.SCHEMA_DRIFT,
+    }
+)
 
 # Faults a well-behaved client should retry. SCHEMA_DRIFT and TRUNCATED_BODY
 # are excluded deliberately: retrying doesn't help if the service has genuinely

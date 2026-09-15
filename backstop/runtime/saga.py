@@ -32,13 +32,22 @@ class Effect:
     """Something that happened in the world, and how to undo it."""
 
     name: str
-    # None for an irreversible effect (a sent notification). Keeping these in
-    # the log anyway is deliberate: the report needs to know they happened.
+    # None when we hold no way to undo this effect right now. That covers two
+    # very different situations, which is why `irreversible` is separate.
     compensate: Callable[[], Awaitable[None]] | None
     detail: dict | None = None
+    # True only when the effect genuinely cannot be undone by anyone — a sent
+    # email. NOT true merely because we lack a handle for it.
+    #
+    # Conflating these two was a real bug: a capture whose response was lost is
+    # perfectly refundable, we just don't know its id yet, and reconciliation
+    # will find it. Treating that uncertainty as irreversibility tripped the
+    # point-of-no-return rule, suppressed the unwind, and left money taken with
+    # nothing shipped — the exact harm the unwind existed to prevent.
+    irreversible: bool = False
 
     @property
-    def reversible(self) -> bool:
+    def has_compensation(self) -> bool:
         return self.compensate is not None
 
 
@@ -79,9 +88,17 @@ class SagaLog:
         name: str,
         compensate: Callable[[], Awaitable[None]] | None = None,
         detail: dict | None = None,
+        irreversible: bool = False,
     ) -> None:
         """Register a completed side effect and how to undo it."""
-        self._effects.append(Effect(name=name, compensate=compensate, detail=detail))
+        self._effects.append(
+            Effect(
+                name=name,
+                compensate=compensate,
+                detail=detail,
+                irreversible=irreversible,
+            )
+        )
 
     def has(self, name: str) -> bool:
         return any(e.name == name for e in self._effects)
@@ -100,8 +117,12 @@ class SagaLog:
         a 60% fault rate it manufactured 18 false notifications per 200
         episodes out of runs where the goods had genuinely shipped and only the
         final bookkeeping call had failed.
+
+        Reads ``irreversible``, not "has no compensation". Not knowing how to
+        undo something is a gap to be closed by reconciliation; being unable to
+        undo it is a fact about the world.
         """
-        return any(not e.reversible for e in self._effects)
+        return any(e.irreversible for e in self._effects)
 
     async def unwind(self, attempts: int = 3) -> CompensationResult:
         """Undo every reversible effect, newest first.
@@ -115,6 +136,9 @@ class SagaLog:
 
         for effect in reversed(self._effects):
             if effect.compensate is None:
+                # Either genuinely irreversible, or an effect whose handle we
+                # never learned. Either way there is nothing to call here —
+                # reconciliation is what turns the second kind into the first.
                 result.irreversible.append(effect.name)
                 continue
 

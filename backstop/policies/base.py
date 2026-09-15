@@ -58,11 +58,17 @@ class Observation:
 
 
 class Policy(Protocol):
-    """The agent's decision function."""
+    """The agent's decision function.
+
+    ``next_action`` is async because a real policy has to be able to *call*
+    something — a model endpoint, a planner, a human. Making it synchronous
+    would have quietly restricted this seam to policies that can decide without
+    any I/O, which excludes every interesting one.
+    """
 
     name: str
 
-    def next_action(self, observation: Observation) -> Action:
+    async def next_action(self, observation: Observation) -> Action:
         """Choose the next action given everything known so far."""
         ...
 
