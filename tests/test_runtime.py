@@ -90,9 +90,72 @@ async def test_saga_records_irreversible_effects_separately() -> None:
     result = await saga.unwind()
 
     assert result.irreversible == ["notify"]
-    # Irreversible is not the same as failed — nothing went wrong here, the
-    # action simply cannot be undone.
-    assert result.clean is True
+    # Irreversible is not the same as failed — nothing went wrong, the action
+    # simply cannot be undone. But the unwind did not restore the world either,
+    # so it must not report itself clean: `clean` used to be `not failed`, which
+    # let the saga claim a tidy unwind while leaving an effect standing.
+    assert result.clean is False
+    assert result.halted_at == "notify"
+
+
+async def test_an_unwind_stops_at_the_first_effect_it_cannot_undo() -> None:
+    """The rule that turned one of this project's "findings" into a bug report.
+
+    The log is ordered by dependency: the payment was captured *for* the
+    shipment. If the shipment cannot be cancelled — no handle, because its
+    response was lost — then refunding the capture does not tidy up, it
+    converts "money taken, goods shipped" (consistent) into
+    `shipped_without_payment` (an orphan that did not exist before the unwind
+    ran). An unwind is only safe as a complete suffix of the log.
+    """
+    undone: list[str] = []
+    saga = SagaLog()
+    saga.record("reserve", compensate=lambda: _append(undone, "reserve"))
+    saga.record("authorize", compensate=lambda: _append(undone, "authorize"))
+    saga.record("capture", compensate=lambda: _append(undone, "capture"))
+    saga.record("ship", compensate=None)  # response lost; no handle to cancel
+
+    result = await saga.unwind()
+
+    assert undone == [], "nothing under the un-undoable effect may be touched"
+    assert result.halted_at == "ship"
+    assert result.clean is False
+
+
+async def test_a_failed_compensation_also_stops_the_unwind() -> None:
+    """Same reasoning: "could not undo" is could-not-undo, however it arose."""
+    undone: list[str] = []
+
+    async def always_fails() -> None:
+        raise RuntimeError("cancel_shipment is down")
+
+    saga = SagaLog()
+    saga.record("capture", compensate=lambda: _append(undone, "capture"))
+    saga.record("ship", compensate=always_fails)
+
+    result = await saga.unwind(attempts=2)
+
+    assert undone == []
+    assert [name for name, _ in result.failed] == ["ship"]
+    assert result.halted_at == "ship"
+    assert result.clean is False
+
+
+async def test_the_halt_rule_can_be_switched_off_so_its_damage_is_measurable()  -> None:
+    """Every protection here is a flag, and this one is no exception.
+
+    Keeping the old behaviour reachable is what lets the sweep put a number on
+    what the rule prevents, instead of the README asserting it.
+    """
+    undone: list[str] = []
+    saga = SagaLog()
+    saga.record("capture", compensate=lambda: _append(undone, "capture"))
+    saga.record("ship", compensate=None)
+
+    result = await saga.unwind(halt_at_uncompensatable=False)
+
+    assert undone == ["capture"], "the unwind should have carried on regardless"
+    assert result.halted_at is None
 
 
 async def _append(sink: list[str], name: str) -> None:
@@ -192,7 +255,16 @@ async def test_blind_unwinding_manufactures_false_notifications() -> None:
     bookkeeping call failed. A runtime that unwinds at that point cancels a
     real shipment and turns a sent email into a permanent lie.
     """
-    blind = replace(RUNTIME, respect_point_of_no_return=False)
+    # Both guards off. They overlap: the halt rule stops an unwind at the first
+    # effect it cannot undo, and `notify` has no compensation by construction —
+    # so with the halt rule on, a blind unwind stops at the notification and
+    # never reaches the shipment underneath it. Reproducing the original damage
+    # needs the runtime as it was before either rule existed.
+    blind = replace(
+        RUNTIME,
+        respect_point_of_no_return=False,
+        halt_unwind_at_uncompensatable=False,
+    )
     outcomes = [
         await run_episode(seed, ScriptedPolicy(), blind, 0.6, **GOOD)
         for seed in range(80)
@@ -203,7 +275,11 @@ async def test_blind_unwinding_manufactures_false_notifications() -> None:
 
 async def test_respecting_the_point_of_no_return_reduces_the_damage() -> None:
     """The fix, measured against the bug above on identical seeds."""
-    blind = replace(RUNTIME, respect_point_of_no_return=False)
+    blind = replace(
+        RUNTIME,
+        respect_point_of_no_return=False,
+        halt_unwind_at_uncompensatable=False,
+    )
     seeds = range(80)
 
     blind_out = [

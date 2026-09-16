@@ -132,7 +132,24 @@ async def verify_order(session: AsyncSession, order_id: str) -> VerificationResu
         if p.state in (PaymentState.CAPTURED, PaymentState.REFUNDED)
     )
     held = [r for r in reservations if r.state == ReservationState.HELD]
-    terminal = order.state != OrderState.PENDING
+
+    # Whether the *order row* reached a terminal state, which is not the same
+    # question as whether the episode is over.
+    #
+    # These checks used to be gated on `order.state != PENDING`, and that was a
+    # hole big enough to drive the whole result through: the only thing that
+    # makes an order terminal is a successful cancel or complete, and those
+    # calls are fault-injected like any other. So the verifier stopped looking
+    # exactly when the world was most likely to be broken — an order left
+    # PENDING with stock held and a payment authorized scored as a *clean
+    # failure*, the outcome this project treats as good.
+    #
+    # An episode that has stopped running is over regardless of what the order
+    # row says, so the checks now apply either way. It cost the baseline real
+    # points at high fault rates and changed the runtime arm barely at all,
+    # which is the direction that tells you the hole was flattering the wrong
+    # side of the comparison.
+
 
     # --- Money -------------------------------------------------------------
 
@@ -177,18 +194,19 @@ async def verify_order(session: AsyncSession, order_id: str) -> VerificationResu
             )
         # An authorization left open on a finished order keeps the customer's
         # funds on hold. Less severe than a capture, still an orphan.
-        if terminal and payment.state == PaymentState.AUTHORIZED:
+        if payment.state == PaymentState.AUTHORIZED:
             violations.append(
                 Violation(
                     DANGLING_AUTHORIZATION,
                     order_id,
-                    f"payment {payment.id} still authorized on a {order.state} order",
+                    f"payment {payment.id} still authorized on a "
+                    f"{order.state} order",
                 )
             )
 
     # --- Stock -------------------------------------------------------------
 
-    if terminal and held:
+    if held:
         violations.append(
             Violation(
                 LEAKED_STOCK,

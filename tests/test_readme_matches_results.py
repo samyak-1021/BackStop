@@ -34,6 +34,7 @@ ALIASES = {
     "baseline": "none (baseline)",
     "+ compensation and reconciliation": "+ compensation+reconcile",
     "respects the point of no return": "respects the PONR",
+    "+ compensation, unwinding blindly": "+ compensation, unwinding blindly",
 }
 
 TOLERANCE = 0.005  # half a percentage point — the README quotes one decimal
@@ -109,7 +110,24 @@ def rate(cell: str) -> float:
 
 
 def find(data: dict, section: str, label: str, fault_rate: float) -> dict:
-    for wanted in (label, ALIASES.get(label)):
+    """Resolve a README row label to its results.json row.
+
+    Three spellings are tried, in order of how much they assume:
+
+    1. The label exactly as written.
+    2. Its alias, where the README's wording differs from the sweep's.
+    3. The label with a trailing parenthetical removed — a README row may
+       annotate itself ("+ compensation, unwinding blindly (the old
+       behaviour)") and that annotation is for the reader, not part of the
+       identifier.
+
+    Order matters. Stripping first turns the real label "none (baseline)" into
+    "none" and loses it, which is how the first version of this failed.
+    """
+    stripped = re.sub(r"\s*\([^)]*\)\s*$", "", label).strip()
+    candidates = (label, ALIASES.get(label), stripped, ALIASES.get(stripped))
+
+    for wanted in candidates:
         if wanted is None:
             continue
         for row in data[section]:
@@ -131,7 +149,7 @@ def close(claimed: float, actual: float, what: str) -> None:
 
 
 def test_headline_curve_matches_results(data: dict, readme: str) -> None:
-    rows = table_with(readme, "Fault rate", "Baseline correct", "Runtime calls")
+    rows = table_with(readme, "Fault rate", "Baseline correct", "Calls")
     assert len(rows) == len(data["fault_rates"]), "a fault rate went missing"
 
     for row in rows:
@@ -144,9 +162,15 @@ def test_headline_curve_matches_results(data: dict, readme: str) -> None:
         close(pct(row[3]), run["correct_rate"], f"runtime correct @ {r}")
         close(pct(row[4]), run["orphan_rate"], f"runtime orphans @ {r}")
 
-        calls, retries = (int(x.strip()) for x in row[5].split("/"))
-        assert calls == run["median_tool_calls"], f"median calls @ {r}"
-        assert retries == run["median_retries"], f"median retries @ {r}"
+        # "6 → 12": both arms' median call counts. Publishing only the runtime's
+        # left the reader unable to see what the reliability cost, so the cheaper
+        # column is asserted too.
+        base_calls, run_calls = (
+            int(x.strip()) for x in row[5].replace("->", "→").split("→")
+        )
+        assert base_calls == base["median_tool_calls"], f"baseline calls @ {r}"
+        assert run_calls == run["median_tool_calls"], f"runtime calls @ {r}"
+        assert int(row[6]) == run["median_retries"], f"median retries @ {r}"
 
 
 def test_pass_k_table_matches_results(data: dict, readme: str) -> None:
@@ -284,3 +308,164 @@ def test_every_episode_count_quoted_in_the_readme_is_real(
         assert int(quoted) == data["episodes_per_cell"]
     for quoted in re.findall(r"per (\d+) episodes", readme):
         assert int(quoted) == data["episodes_per_cell"]
+
+
+# --- The other direction ------------------------------------------------------
+#
+# Every test above starts from a README row and looks it up in results.json.
+# That catches a stale number. It cannot catch a *missing* one: deleting the two
+# least flattering rows from this document — the one where retries triple the
+# double-charges, and the one where blind unwinding does the most damage — left
+# the whole suite passing. A one-directional check is a check against typos, not
+# against selective reporting.
+
+# Sections whose every row must appear in the README: the header fragments that
+# identify the table, and which of its columns hold the label and the fault rate.
+# A section is listed here because it is *published*; leaving one out is a
+# deliberate act with a reason attached.
+#
+# The columns are specified rather than searched for a reason. The first version
+# of this test asked only "do this label and this rate appear anywhere in the
+# document" — and deleting a point-of-no-return row sailed through, because the
+# other rows of that same table still mention both. A presence check has to look
+# at the table the row belongs to, not at the prose around it.
+PUBLISHED_SECTIONS = {
+    # label_col is None where the table has no label column: the curve's rows are
+    # fault rates and both arms are columns, so presence means "this rate has a
+    # row" and the headline test's length assertion covers the rest.
+    "curve": {"headers": ("Fault rate", "Baseline correct", "Calls"),
+              "label_col": None, "rate_col": 0},
+    "point_of_no_return": {"headers": ("Fault rate", "False notifications"),
+                           "label_col": 1, "rate_col": 0},
+    "ordering": {"headers": ("Policy", "Fault rate", "Correct", "Orphans"),
+                 "label_col": 0, "rate_col": 1},
+}
+
+# Ablation rows deliberately not shown, with the reason. Anything not listed
+# here has to be in the README.
+UNPUBLISHED_ABLATION_ROWS = {
+    "+ validation only": "inert under the scripted policy; discussed in prose instead",
+    "+ preconditions only": "inert under a well-behaved policy; discussed in prose",
+    "everything (runtime)": "identical to the curve's runtime row at the same rate",
+}
+
+
+def _mentions(text: str, label: str) -> bool:
+    """Is this results.json label referred to anywhere in the document?
+
+    The README does not always use the sweep's internal label — it writes
+    "baseline" for "none (baseline)", for instance — so every alias that maps to
+    this label counts as a mention too. Without that, tightening the reverse
+    check would just produce false alarms, and a check people learn to ignore is
+    worse than no check.
+    """
+    if label in text:
+        return True
+    return any(
+        wording in text for wording, canonical in ALIASES.items() if canonical == label
+    )
+
+
+def _canonical(label: str) -> str:
+    """The results.json label a README cell is referring to."""
+    stripped = re.sub(r"\s*\([^)]*\)\s*$", "", label).strip()
+    return ALIASES.get(label) or ALIASES.get(stripped) or label
+
+
+def test_no_published_row_is_missing_from_the_readme(data: dict, readme: str) -> None:
+    """Every row of every published section must appear in that section's table."""
+    missing = []
+    for section, spec in PUBLISHED_SECTIONS.items():
+        rows = table_with(readme, *spec["headers"])
+
+        published = set()
+        for row in rows:
+            fault_rate = rate(row[spec["rate_col"]])
+            if spec["label_col"] is None:
+                published.add((None, fault_rate))
+            else:
+                published.add((_canonical(row[spec["label_col"]]), fault_rate))
+                # Also record the label as written, so a README that happens to
+                # use the sweep's own spelling is not tripped up by aliasing.
+                published.add((row[spec["label_col"]], fault_rate))
+
+        for row in data[section]:
+            key = (
+                None if spec["label_col"] is None else row["label"],
+                round(row["fault_rate"], 4),
+            )
+            if key not in published:
+                missing.append(
+                    f"{section}: {row['label']} @ {row['fault_rate']:.0%}"
+                )
+
+    assert not missing, (
+        "results.json contains rows the README's own tables do not: "
+        + "; ".join(sorted(set(missing)))
+    )
+
+
+def test_every_ablation_row_is_either_published_or_explained(
+    data: dict, readme: str
+) -> None:
+    """The ablation is the easiest place to quietly drop an inconvenient row."""
+    text = re.sub(r"[*`]", "", readme)
+
+    silent = [
+        row["label"]
+        for row in data["ablation"]
+        if row["label"] not in UNPUBLISHED_ABLATION_ROWS
+        and not _mentions(text, row["label"])
+    ]
+    assert not silent, (
+        "ablation row(s) neither shown in the README nor listed as deliberately "
+        f"omitted: {sorted(set(silent))}"
+    )
+
+    stale = [
+        label for label in UNPUBLISHED_ABLATION_ROWS
+        if label not in {row["label"] for row in data["ablation"]}
+    ]
+    assert not stale, (
+        f"the omission list names rows the sweep no longer produces: {stale}"
+    )
+
+
+async def test_the_published_numbers_are_reproducible_from_this_code() -> None:
+    """The link the README↔results tests cannot make.
+
+    `results.json` is a checked-in file. Everything above proves the README
+    agrees with it; nothing proved *it* agrees with the code, so a stale
+    results file would sail through. This re-runs one cell and compares.
+
+    Deliberately small — 40 of the 200 published seeds — so it costs seconds
+    rather than minutes. It is a tripwire for "the code moved and the numbers
+    did not", not a re-derivation of the sweep.
+    """
+    from backstop.eval.sweep import run_cell
+    from backstop.policies.scripted import ScriptedPolicy
+    from backstop.runtime.engine import BASELINE, RUNTIME
+
+    data = json.loads(RESULTS.read_text())
+    seeds = range(40)
+
+    for label, config in (("baseline", BASELINE), ("runtime", RUNTIME)):
+        published = next(
+            r
+            for r in data["curve"]
+            if r["label"] == label and r["fault_rate"] == 0.20
+        )
+        measured = await run_cell(label, ScriptedPolicy(), config, 0.20, seeds)
+
+        # A 40-seed subsample of a 200-seed cell, so the tolerance is sampling
+        # noise, not slack: 15 points would still catch a real regression while
+        # tolerating the subsample.
+        assert abs(measured.correct_rate - published["correct_rate"]) < 0.15, (
+            f"{label} correctness has drifted from the published figure: "
+            f"{measured.correct_rate:.1%} now vs {published['correct_rate']:.1%} "
+            "in results.json — re-run scripts/run_sweep.py"
+        )
+        assert abs(measured.orphan_rate - published["orphan_rate"]) < 0.15, (
+            f"{label} orphan rate has drifted: {measured.orphan_rate:.1%} now "
+            f"vs {published['orphan_rate']:.1%} in results.json"
+        )

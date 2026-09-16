@@ -58,16 +58,19 @@ class CompensationResult:
     compensated: list[str] = field(default_factory=list)
     failed: list[tuple[str, str]] = field(default_factory=list)
     irreversible: list[str] = field(default_factory=list)
+    # The effect the unwind stopped at, if it could not run to completion.
+    halted_at: str | None = None
 
     @property
     def clean(self) -> bool:
-        """True when every reversible effect was successfully undone.
+        """True when the unwind actually restored the world.
 
-        Irreversible effects do not make an unwind dirty *here* — the runtime's
-        job was to avoid performing them, and whether it managed that is the
-        verifier's call, not the saga's.
+        This used to be ``not self.failed``, which let the saga report a clean
+        unwind while leaving an effect standing — the exact thing this module's
+        docstring says is worse than admitting the mess. An unwind that stopped
+        early did not achieve anything of the sort.
         """
-        return not self.failed
+        return not self.failed and self.halted_at is None
 
 
 class SagaLog:
@@ -124,7 +127,9 @@ class SagaLog:
         """
         return any(e.irreversible for e in self._effects)
 
-    async def unwind(self, attempts: int = 3) -> CompensationResult:
+    async def unwind(
+        self, attempts: int = 3, halt_at_uncompensatable: bool = True
+    ) -> CompensationResult:
         """Undo every reversible effect, newest first.
 
         Each compensation gets its own retries: the tools that undo things sit
@@ -136,10 +141,25 @@ class SagaLog:
 
         for effect in reversed(self._effects):
             if effect.compensate is None:
-                # Either genuinely irreversible, or an effect whose handle we
-                # never learned. Either way there is nothing to call here —
-                # reconciliation is what turns the second kind into the first.
+                # Nothing to call: either genuinely irreversible, or an effect
+                # whose handle we never learned. **Stop here.**
+                #
+                # Skipping it and carrying on with the earlier effects is the
+                # bug that produced this project's most-quoted finding. The log
+                # is ordered by dependency — the payment was captured *for* the
+                # shipment — so refunding a capture whose shipment we could not
+                # cancel converts "money taken, goods shipped", which is
+                # consistent, into `shipped_without_payment`, which is an
+                # orphan that did not exist before the unwind ran.
+                #
+                # This is the point-of-no-return rule one level down. There it
+                # is "do not unwind past something irreversible"; here it is "do
+                # not unwind past something you could not undo". Same reason:
+                # an unwind is only safe as a *complete suffix* of the log.
                 result.irreversible.append(effect.name)
+                if halt_at_uncompensatable:
+                    result.halted_at = effect.name
+                    break
                 continue
 
             last_error = ""
@@ -151,6 +171,11 @@ class SagaLog:
                 except Exception as exc:
                     last_error = str(exc)
             else:
+                # A compensation that exhausted its retries leaves that effect
+                # standing, so everything it depends on has to stay too.
                 result.failed.append((effect.name, last_error))
+                if halt_at_uncompensatable:
+                    result.halted_at = effect.name
+                    break
 
         return result

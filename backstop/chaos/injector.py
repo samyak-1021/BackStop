@@ -29,7 +29,6 @@ from dataclasses import dataclass, field
 import httpx
 
 from backstop.chaos.faults import (
-    APPLIES_THE_EFFECT,
     DEFAULT_MIX,
     FaultEvent,
     FaultKind,
@@ -106,22 +105,33 @@ class ChaosTransport(httpx.AsyncBaseTransport):
         if fault is None or request.method == "GET":
             return await self._inner.handle_async_request(request)
 
-        self.events.append(
-            FaultEvent(
-                kind=fault,
-                endpoint=endpoint,
-                attempt=self.calls,
-                applied_to_world=fault in APPLIES_THE_EFFECT,
+        # Recorded once the outcome is known, not before. `fault in
+        # APPLIES_THE_EFFECT` says "this fault kind lets the request through",
+        # which is necessary but not sufficient: the world can still reject it
+        # (409 on insufficient stock, say), in which case nothing was applied.
+        # Marking those as applied taught the runtime to record a
+        # possibly-applied effect for something that never happened — harmless
+        # for reserve, but `notify` sets irreversible=True, so a rejected notify
+        # would have falsely tripped the point-of-no-return rule.
+        def record(applied: bool) -> None:
+            self.events.append(
+                FaultEvent(
+                    kind=fault,
+                    endpoint=endpoint,
+                    attempt=self.calls,
+                    applied_to_world=applied,
+                )
             )
-        )
 
         # --- Faults that stop the request before it reaches the world ------
 
         if fault is FaultKind.TIMEOUT:
+            record(applied=False)
             await self._sleep(0.05)
             raise ToolFailure(fault, endpoint, "request timed out")
 
         if fault is FaultKind.RATE_LIMITED:
+            record(applied=False)
             return httpx.Response(
                 429,
                 headers={"Retry-After": str(self._config.retry_after_seconds)},
@@ -130,6 +140,7 @@ class ChaosTransport(httpx.AsyncBaseTransport):
             )
 
         if fault is FaultKind.SERVER_ERROR:
+            record(applied=False)
             return httpx.Response(
                 500, json={"detail": "internal error"}, request=request
             )
@@ -137,6 +148,9 @@ class ChaosTransport(httpx.AsyncBaseTransport):
         # --- Faults that let the request through first ---------------------
 
         response = await self._inner.handle_async_request(request)
+        # The request reached the world. Whether it *changed* anything is the
+        # world's answer, not the fault's.
+        record(applied=response.status_code < 400)
 
         if fault is FaultKind.SLOW:
             await self._sleep(0.05)

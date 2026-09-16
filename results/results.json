@@ -63,8 +63,8 @@
       "orphan_kinds": {
         "dangling_authorization": 4,
         "leaked_stock": 6,
-        "double_charge": 1,
-        "incomplete_completion": 1
+        "incomplete_completion": 1,
+        "double_charge": 1
       },
       "rolled_forward": 0,
       "escalated": 0,
@@ -104,10 +104,10 @@
       "median_tool_calls": 6.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "money_taken_nothing_shipped": 1,
         "leaked_stock": 14,
-        "double_charge": 3,
+        "money_taken_nothing_shipped": 1,
         "incomplete_completion": 3,
+        "double_charge": 3,
         "dangling_authorization": 4
       },
       "rolled_forward": 0,
@@ -142,24 +142,24 @@
       "episodes": 200,
       "correct": 140,
       "fulfilled": 127,
-      "orphaned": 43,
-      "clean_failures": 48,
+      "orphaned": 44,
+      "clean_failures": 47,
       "faults_injected": 258,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 31,
+        "leaked_stock": 32,
         "money_taken_nothing_shipped": 5,
-        "dangling_authorization": 13,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "dangling_authorization": 14,
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 0,
       "escalated": 0,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.7,
-      "orphan_rate": 0.215
+      "orphan_rate": 0.22
     },
     {
       "label": "runtime",
@@ -186,15 +186,15 @@
       "episodes": 200,
       "correct": 111,
       "fulfilled": 103,
-      "orphaned": 63,
-      "clean_failures": 57,
+      "orphaned": 66,
+      "clean_failures": 54,
       "faults_injected": 384,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 42,
+        "leaked_stock": 46,
         "money_taken_nothing_shipped": 11,
-        "dangling_authorization": 23,
+        "dangling_authorization": 25,
         "double_charge": 9,
         "incomplete_completion": 4
       },
@@ -203,7 +203,7 @@
       "gave_up": 96,
       "satisfiable": 169,
       "correct_rate": 0.555,
-      "orphan_rate": 0.315
+      "orphan_rate": 0.33
     },
     {
       "label": "runtime",
@@ -230,15 +230,15 @@
       "episodes": 200,
       "correct": 75,
       "fulfilled": 60,
-      "orphaned": 81,
-      "clean_failures": 75,
+      "orphaned": 97,
+      "clean_failures": 59,
       "faults_injected": 555,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 62,
+        "leaked_stock": 79,
+        "dangling_authorization": 38,
         "money_taken_nothing_shipped": 21,
-        "dangling_authorization": 29,
         "double_charge": 12,
         "incomplete_completion": 2
       },
@@ -247,7 +247,7 @@
       "gave_up": 145,
       "satisfiable": 169,
       "correct_rate": 0.375,
-      "orphan_rate": 0.405
+      "orphan_rate": 0.485
     },
     {
       "label": "runtime",
@@ -274,14 +274,14 @@
       "episodes": 200,
       "correct": 46,
       "fulfilled": 22,
-      "orphaned": 104,
-      "clean_failures": 81,
+      "orphaned": 133,
+      "clean_failures": 52,
       "faults_injected": 683,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 84,
-        "dangling_authorization": 32,
+        "leaked_stock": 121,
+        "dangling_authorization": 45,
         "money_taken_nothing_shipped": 23,
         "double_charge": 12,
         "incomplete_completion": 1
@@ -291,7 +291,7 @@
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.23,
-      "orphan_rate": 0.52
+      "orphan_rate": 0.665
     },
     {
       "label": "runtime",
@@ -299,20 +299,18 @@
       "episodes": 200,
       "correct": 177,
       "fulfilled": 146,
-      "orphaned": 1,
-      "clean_failures": 53,
-      "faults_injected": 1419,
+      "orphaned": 0,
+      "clean_failures": 54,
+      "faults_injected": 1418,
       "median_tool_calls": 12.0,
       "median_retries": 4.0,
-      "orphan_kinds": {
-        "false_notification": 1
-      },
+      "orphan_kinds": {},
       "rolled_forward": 17,
       "escalated": 0,
       "gave_up": 71,
       "satisfiable": 169,
       "correct_rate": 0.885,
-      "orphan_rate": 0.005
+      "orphan_rate": 0.0
     },
     {
       "label": "baseline",
@@ -320,14 +318,14 @@
       "episodes": 200,
       "correct": 33,
       "fulfilled": 3,
-      "orphaned": 111,
-      "clean_failures": 87,
+      "orphaned": 153,
+      "clean_failures": 45,
       "faults_injected": 742,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 97,
-        "dangling_authorization": 38,
+        "leaked_stock": 148,
+        "dangling_authorization": 51,
         "double_charge": 9,
         "money_taken_nothing_shipped": 21,
         "incomplete_completion": 1
@@ -337,7 +335,7 @@
       "gave_up": 196,
       "satisfiable": 169,
       "correct_rate": 0.165,
-      "orphan_rate": 0.555
+      "orphan_rate": 0.765
     },
     {
       "label": "runtime",
@@ -345,20 +343,20 @@
       "episodes": 200,
       "correct": 123,
       "fulfilled": 92,
-      "orphaned": 5,
-      "clean_failures": 103,
-      "faults_injected": 2196,
+      "orphaned": 1,
+      "clean_failures": 107,
+      "faults_injected": 2169,
       "median_tool_calls": 15.0,
       "median_retries": 7.0,
       "orphan_kinds": {
-        "false_notification": 5
+        "leaked_stock": 1
       },
       "rolled_forward": 14,
       "escalated": 3,
       "gave_up": 123,
       "satisfiable": 169,
       "correct_rate": 0.615,
-      "orphan_rate": 0.025
+      "orphan_rate": 0.005
     }
   ],
   "ablation": [
@@ -368,24 +366,24 @@
       "episodes": 200,
       "correct": 140,
       "fulfilled": 127,
-      "orphaned": 43,
-      "clean_failures": 48,
+      "orphaned": 44,
+      "clean_failures": 47,
       "faults_injected": 258,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 31,
+        "leaked_stock": 32,
         "money_taken_nothing_shipped": 5,
-        "dangling_authorization": 13,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "dangling_authorization": 14,
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 0,
       "escalated": 0,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.7,
-      "orphan_rate": 0.215
+      "orphan_rate": 0.22
     },
     {
       "label": "+ retries only",
@@ -401,8 +399,8 @@
       "orphan_kinds": {
         "leaked_stock": 27,
         "dangling_authorization": 11,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 0,
       "escalated": 0,
@@ -423,8 +421,8 @@
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
+        "leaked_stock": 12,
         "money_taken_nothing_shipped": 6,
-        "leaked_stock": 11,
         "dangling_authorization": 5
       },
       "rolled_forward": 0,
@@ -440,24 +438,24 @@
       "episodes": 200,
       "correct": 140,
       "fulfilled": 127,
-      "orphaned": 43,
-      "clean_failures": 48,
+      "orphaned": 44,
+      "clean_failures": 47,
       "faults_injected": 258,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 31,
+        "leaked_stock": 32,
         "money_taken_nothing_shipped": 5,
-        "dangling_authorization": 13,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "dangling_authorization": 14,
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 0,
       "escalated": 0,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.7,
-      "orphan_rate": 0.215
+      "orphan_rate": 0.22
     },
     {
       "label": "+ compensation only",
@@ -465,24 +463,48 @@
       "episodes": 200,
       "correct": 143,
       "fulfilled": 133,
-      "orphaned": 52,
-      "clean_failures": 36,
-      "faults_injected": 281,
+      "orphaned": 40,
+      "clean_failures": 48,
+      "faults_injected": 268,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 27,
-        "shipped_without_payment": 14,
-        "dangling_authorization": 10,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "leaked_stock": 28,
+        "dangling_authorization": 11,
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 7,
       "escalated": 1,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.715,
-      "orphan_rate": 0.26
+      "orphan_rate": 0.2
+    },
+    {
+      "label": "+ compensation, unwinding blindly",
+      "fault_rate": 0.2,
+      "episodes": 200,
+      "correct": 143,
+      "fulfilled": 133,
+      "orphaned": 53,
+      "clean_failures": 35,
+      "faults_injected": 281,
+      "median_tool_calls": 7.0,
+      "median_retries": 0.0,
+      "orphan_kinds": {
+        "leaked_stock": 27,
+        "shipped_without_payment": 14,
+        "dangling_authorization": 11,
+        "incomplete_completion": 5,
+        "double_charge": 6
+      },
+      "rolled_forward": 7,
+      "escalated": 1,
+      "gave_up": 69,
+      "satisfiable": 169,
+      "correct_rate": 0.715,
+      "orphan_rate": 0.265
     },
     {
       "label": "+ preconditions only",
@@ -490,24 +512,24 @@
       "episodes": 200,
       "correct": 140,
       "fulfilled": 127,
-      "orphaned": 43,
-      "clean_failures": 48,
+      "orphaned": 44,
+      "clean_failures": 47,
       "faults_injected": 258,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 31,
+        "leaked_stock": 32,
         "money_taken_nothing_shipped": 5,
-        "dangling_authorization": 13,
-        "double_charge": 6,
-        "incomplete_completion": 5
+        "dangling_authorization": 14,
+        "incomplete_completion": 5,
+        "double_charge": 6
       },
       "rolled_forward": 0,
       "escalated": 0,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.7,
-      "orphan_rate": 0.215
+      "orphan_rate": 0.22
     },
     {
       "label": "+ compensation+reconcile",
@@ -515,23 +537,23 @@
       "episodes": 200,
       "correct": 143,
       "fulfilled": 133,
-      "orphaned": 27,
-      "clean_failures": 61,
+      "orphaned": 28,
+      "clean_failures": 60,
       "faults_injected": 279,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
+        "dangling_authorization": 9,
         "leaked_stock": 15,
-        "double_charge": 6,
         "incomplete_completion": 5,
-        "dangling_authorization": 8
+        "double_charge": 6
       },
       "rolled_forward": 7,
       "escalated": 1,
       "gave_up": 69,
       "satisfiable": 169,
       "correct_rate": 0.715,
-      "orphan_rate": 0.135
+      "orphan_rate": 0.14
     },
     {
       "label": "retries + idempotency",
@@ -577,14 +599,14 @@
       "episodes": 200,
       "correct": 46,
       "fulfilled": 22,
-      "orphaned": 104,
-      "clean_failures": 81,
+      "orphaned": 133,
+      "clean_failures": 52,
       "faults_injected": 683,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 84,
-        "dangling_authorization": 32,
+        "leaked_stock": 121,
+        "dangling_authorization": 45,
         "money_taken_nothing_shipped": 23,
         "double_charge": 12,
         "incomplete_completion": 1
@@ -594,7 +616,7 @@
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.23,
-      "orphan_rate": 0.52
+      "orphan_rate": 0.665
     },
     {
       "label": "+ retries only",
@@ -602,14 +624,14 @@
       "episodes": 200,
       "correct": 60,
       "fulfilled": 66,
-      "orphaned": 120,
-      "clean_failures": 51,
+      "orphaned": 122,
+      "clean_failures": 49,
       "faults_injected": 1289,
       "median_tool_calls": 10.0,
       "median_retries": 4.0,
       "orphan_kinds": {
-        "leaked_stock": 77,
-        "dangling_authorization": 43,
+        "leaked_stock": 78,
+        "dangling_authorization": 45,
         "double_charge": 35,
         "incomplete_completion": 15,
         "money_taken_nothing_shipped": 2
@@ -619,7 +641,7 @@
       "gave_up": 122,
       "satisfiable": 169,
       "correct_rate": 0.3,
-      "orphan_rate": 0.6
+      "orphan_rate": 0.61
     },
     {
       "label": "+ idempotency only",
@@ -627,14 +649,14 @@
       "episodes": 200,
       "correct": 55,
       "fulfilled": 24,
-      "orphaned": 82,
-      "clean_failures": 94,
+      "orphaned": 105,
+      "clean_failures": 71,
       "faults_injected": 690,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "dangling_authorization": 30,
-        "leaked_stock": 73,
+        "leaked_stock": 105,
+        "dangling_authorization": 39,
         "money_taken_nothing_shipped": 23
       },
       "rolled_forward": 0,
@@ -642,7 +664,7 @@
       "gave_up": 180,
       "satisfiable": 169,
       "correct_rate": 0.275,
-      "orphan_rate": 0.41
+      "orphan_rate": 0.525
     },
     {
       "label": "+ validation only",
@@ -650,14 +672,14 @@
       "episodes": 200,
       "correct": 46,
       "fulfilled": 22,
-      "orphaned": 104,
-      "clean_failures": 81,
+      "orphaned": 133,
+      "clean_failures": 52,
       "faults_injected": 683,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 84,
-        "dangling_authorization": 32,
+        "leaked_stock": 121,
+        "dangling_authorization": 45,
         "money_taken_nothing_shipped": 23,
         "double_charge": 12,
         "incomplete_completion": 1
@@ -667,7 +689,7 @@
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.23,
-      "orphan_rate": 0.52
+      "orphan_rate": 0.665
     },
     {
       "label": "+ compensation only",
@@ -675,14 +697,40 @@
       "episodes": 200,
       "correct": 47,
       "fulfilled": 25,
-      "orphaned": 99,
-      "clean_failures": 85,
+      "orphaned": 120,
+      "clean_failures": 64,
+      "faults_injected": 794,
+      "median_tool_calls": 6.0,
+      "median_retries": 0.0,
+      "orphan_kinds": {
+        "leaked_stock": 98,
+        "dangling_authorization": 38,
+        "double_charge": 12,
+        "incomplete_completion": 3,
+        "money_taken_nothing_shipped": 13,
+        "shipped_without_payment": 6
+      },
+      "rolled_forward": 8,
+      "escalated": 2,
+      "gave_up": 181,
+      "satisfiable": 169,
+      "correct_rate": 0.235,
+      "orphan_rate": 0.6
+    },
+    {
+      "label": "+ compensation, unwinding blindly",
+      "fault_rate": 0.6,
+      "episodes": 200,
+      "correct": 47,
+      "fulfilled": 25,
+      "orphaned": 127,
+      "clean_failures": 57,
       "faults_injected": 926,
       "median_tool_calls": 7.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 47,
-        "dangling_authorization": 30,
+        "leaked_stock": 73,
+        "dangling_authorization": 38,
         "shipped_without_payment": 22,
         "double_charge": 12,
         "incomplete_completion": 3,
@@ -693,7 +741,7 @@
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.235,
-      "orphan_rate": 0.495
+      "orphan_rate": 0.635
     },
     {
       "label": "+ preconditions only",
@@ -701,14 +749,14 @@
       "episodes": 200,
       "correct": 46,
       "fulfilled": 22,
-      "orphaned": 104,
-      "clean_failures": 81,
+      "orphaned": 133,
+      "clean_failures": 52,
       "faults_injected": 683,
       "median_tool_calls": 5.0,
       "median_retries": 0.0,
       "orphan_kinds": {
-        "leaked_stock": 84,
-        "dangling_authorization": 32,
+        "leaked_stock": 121,
+        "dangling_authorization": 45,
         "money_taken_nothing_shipped": 23,
         "double_charge": 12,
         "incomplete_completion": 1
@@ -718,7 +766,7 @@
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.23,
-      "orphan_rate": 0.52
+      "orphan_rate": 0.665
     },
     {
       "label": "+ compensation+reconcile",
@@ -726,24 +774,24 @@
       "episodes": 200,
       "correct": 47,
       "fulfilled": 25,
-      "orphaned": 28,
-      "clean_failures": 156,
-      "faults_injected": 996,
+      "orphaned": 45,
+      "clean_failures": 139,
+      "faults_injected": 960,
       "median_tool_calls": 9.0,
       "median_retries": 0.0,
       "orphan_kinds": {
+        "leaked_stock": 28,
+        "dangling_authorization": 9,
         "double_charge": 12,
-        "dangling_authorization": 5,
         "incomplete_completion": 3,
-        "leaked_stock": 8,
-        "money_taken_nothing_shipped": 3
+        "money_taken_nothing_shipped": 6
       },
       "rolled_forward": 8,
       "escalated": 2,
       "gave_up": 181,
       "satisfiable": 169,
       "correct_rate": 0.235,
-      "orphan_rate": 0.14
+      "orphan_rate": 0.225
     },
     {
       "label": "retries + idempotency",
@@ -751,14 +799,14 @@
       "episodes": 200,
       "correct": 168,
       "fulfilled": 137,
-      "orphaned": 9,
-      "clean_failures": 54,
+      "orphaned": 10,
+      "clean_failures": 53,
       "faults_injected": 1338,
       "median_tool_calls": 11.0,
       "median_retries": 4.0,
       "orphan_kinds": {
-        "leaked_stock": 9,
-        "dangling_authorization": 5,
+        "leaked_stock": 10,
+        "dangling_authorization": 6,
         "money_taken_nothing_shipped": 2
       },
       "rolled_forward": 0,
@@ -766,7 +814,7 @@
       "gave_up": 71,
       "satisfiable": 169,
       "correct_rate": 0.84,
-      "orphan_rate": 0.045
+      "orphan_rate": 0.05
     },
     {
       "label": "everything (runtime)",
@@ -774,20 +822,18 @@
       "episodes": 200,
       "correct": 177,
       "fulfilled": 146,
-      "orphaned": 1,
-      "clean_failures": 53,
-      "faults_injected": 1419,
+      "orphaned": 0,
+      "clean_failures": 54,
+      "faults_injected": 1418,
       "median_tool_calls": 12.0,
       "median_retries": 4.0,
-      "orphan_kinds": {
-        "false_notification": 1
-      },
+      "orphan_kinds": {},
       "rolled_forward": 17,
       "escalated": 0,
       "gave_up": 71,
       "satisfiable": 169,
       "correct_rate": 0.885,
-      "orphan_rate": 0.005
+      "orphan_rate": 0.0
     }
   ],
   "point_of_no_return": [
@@ -860,20 +906,18 @@
       "episodes": 200,
       "correct": 177,
       "fulfilled": 146,
-      "orphaned": 1,
-      "clean_failures": 53,
-      "faults_injected": 1419,
+      "orphaned": 0,
+      "clean_failures": 54,
+      "faults_injected": 1418,
       "median_tool_calls": 12.0,
       "median_retries": 4.0,
-      "orphan_kinds": {
-        "false_notification": 1
-      },
+      "orphan_kinds": {},
       "rolled_forward": 17,
       "escalated": 0,
       "gave_up": 71,
       "satisfiable": 169,
       "correct_rate": 0.885,
-      "orphan_rate": 0.005
+      "orphan_rate": 0.0
     },
     {
       "label": "unwinds blindly",
@@ -903,20 +947,20 @@
       "episodes": 200,
       "correct": 123,
       "fulfilled": 92,
-      "orphaned": 5,
-      "clean_failures": 103,
-      "faults_injected": 2196,
+      "orphaned": 1,
+      "clean_failures": 107,
+      "faults_injected": 2169,
       "median_tool_calls": 15.0,
       "median_retries": 7.0,
       "orphan_kinds": {
-        "false_notification": 5
+        "leaked_stock": 1
       },
       "rolled_forward": 14,
       "escalated": 3,
       "gave_up": 123,
       "satisfiable": 169,
       "correct_rate": 0.615,
-      "orphan_rate": 0.025
+      "orphan_rate": 0.005
     }
   ],
   "ordering": [
@@ -1002,20 +1046,18 @@
       "episodes": 200,
       "correct": 177,
       "fulfilled": 146,
-      "orphaned": 1,
-      "clean_failures": 53,
-      "faults_injected": 1419,
+      "orphaned": 0,
+      "clean_failures": 54,
+      "faults_injected": 1418,
       "median_tool_calls": 12.0,
       "median_retries": 4.0,
-      "orphan_kinds": {
-        "false_notification": 1
-      },
+      "orphan_kinds": {},
       "rolled_forward": 17,
       "escalated": 0,
       "gave_up": 71,
       "satisfiable": 169,
       "correct_rate": 0.885,
-      "orphan_rate": 0.005
+      "orphan_rate": 0.0
     },
     {
       "label": "notify before ship",
@@ -1075,5 +1117,5 @@
       "score": 1.0
     }
   ],
-  "elapsed_seconds": 1168.4
+  "elapsed_seconds": 1276.6
 }

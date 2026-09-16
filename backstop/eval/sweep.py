@@ -28,6 +28,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from statistics import median
@@ -103,9 +104,30 @@ def summarise(label: str, fault_rate: float, outcomes: list[EpisodeOutcome]) -> 
     )
 
 
+def _factory(policy: Policy | Callable[[], Policy]) -> Callable[[], Policy]:
+    """Accept either a policy or a way to make one, and always return the latter.
+
+    A cell used to share one policy object across every episode in it. That is
+    harmless for a stateless policy and quietly wrong for anything else: the
+    episodes run concurrently, so they interleave `reset()` calls and mutations
+    on the same object, and the measured result starts depending on the
+    concurrency setting rather than only on the seed.
+
+    It was latent — the sweep uses stateless policies, and I confirmed their
+    numbers are identical at every concurrency — but the stated next step for
+    this project is to plug in a model-driven policy, which is stateful by
+    construction. Passing a factory removes the trap instead of documenting it.
+    """
+    # `Policy` is a plain Protocol, so isinstance is not available. A policy
+    # has `next_action`; a factory does not.
+    if hasattr(policy, "next_action"):
+        return lambda: policy  # type: ignore[return-value]
+    return policy  # type: ignore[return-value]
+
+
 async def run_cell(
     label: str,
-    policy: Policy,
+    policy: Policy | Callable[[], Policy],
     config: RuntimeConfig,
     fault_rate: float,
     seeds: range | list[int],
@@ -113,22 +135,25 @@ async def run_cell(
 ) -> Metrics:
     """Run every seed for one cell, a few episodes at a time.
 
-    Episodes are fully isolated (their own world, their own RNG), so running
-    them concurrently changes nothing about the results — only how long the
-    sweep takes.
+    Episodes are fully isolated — their own world, their own RNG, and their own
+    policy instance — so running them concurrently changes nothing about the
+    results, only how long the sweep takes. ``policy`` may be an instance (fine
+    for a stateless one) or a zero-argument callable that builds a fresh one per
+    episode.
     """
+    make_policy = _factory(policy)
     semaphore = asyncio.Semaphore(concurrency)
 
     async def one(seed: int) -> EpisodeOutcome:
         async with semaphore:
-            return await run_episode(seed, policy, config, fault_rate)
+            return await run_episode(seed, make_policy(), config, fault_rate)
 
     outcomes = await asyncio.gather(*(one(seed) for seed in seeds))
     return summarise(label, fault_rate, list(outcomes))
 
 
 async def pass_at_k(
-    policy: Policy,
+    policy: Policy | Callable[[], Policy],
     config: RuntimeConfig,
     fault_rate: float,
     groups: int,
@@ -141,11 +166,12 @@ async def pass_at_k(
     against the same kind of task — which is the point. Consistency under
     varying conditions is what "reliable" means; getting lucky once is not.
     """
+    make_policy = _factory(policy)
     semaphore = asyncio.Semaphore(concurrency)
 
     async def one(seed: int) -> EpisodeOutcome:
         async with semaphore:
-            return await run_episode(seed, policy, config, fault_rate)
+            return await run_episode(seed, make_policy(), config, fault_rate)
 
     all_seeds = [(g, g * 1000 + i) for g in range(groups) for i in range(k)]
     outcomes = await asyncio.gather(*(one(seed) for _g, seed in all_seeds))

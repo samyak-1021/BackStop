@@ -59,6 +59,12 @@ class RuntimeConfig:
     # something else kills it, and in a real deployment that is a cost incident.
     step_budget: int = 24
     compensation_attempts: int = 3
+    # Stop unwinding at the first effect that could not be undone, rather than
+    # skipping it and compensating the ones underneath. Switchable because the
+    # damage it prevents is worth measuring rather than asserting: with it off,
+    # an unwind that cannot cancel a shipment goes on to refund the payment for
+    # it, manufacturing an orphan out of a world that was consistent.
+    halt_unwind_at_uncompensatable: bool = True
     # Attempts to push a nearly-finished episode over the line before giving
     # up, used when unwinding is no longer safe.
     roll_forward_attempts: int = 3
@@ -336,7 +342,10 @@ class EpisodeRunner:
                     # response corrupts.
                     await self._reconcile()
                 compensation = await self._saga.unwind(
-                    attempts=self._config.compensation_attempts
+                    attempts=self._config.compensation_attempts,
+                    halt_at_uncompensatable=(
+                        self._config.halt_unwind_at_uncompensatable
+                    )
                 )
                 await self._cancel_order()
 
@@ -397,6 +406,19 @@ class EpisodeRunner:
 
             if action.kind is ActionKind.GIVE_UP:
                 if allow_give_up:
+                    gave_up = True
+                    break
+                # Roll-forward: the policy wants to quit but unwinding is no
+                # longer safe, so push it towards finishing instead.
+                #
+                # This used to rewrite GIVE_UP to COMPLETE unconditionally,
+                # which is the recovery logic telling the same lie it exists to
+                # prevent — a completion recorded without the work behind it.
+                # It is only a real option once every step it claims has
+                # actually happened; otherwise the honest move is to stop and
+                # escalate.
+                missing = self._blocked_because(Action(ActionKind.COMPLETE))
+                if missing is not None:
                     gave_up = True
                     break
                 action = Action(ActionKind.COMPLETE, reason="forced roll-forward")

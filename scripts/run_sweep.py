@@ -72,6 +72,15 @@ async def main(episodes: int, out: Path) -> None:
         "+ idempotency only": replace(BASELINE, idempotency=True),
         "+ validation only": replace(BASELINE, validate_responses=True),
         "+ compensation only": replace(BASELINE, compensate_on_failure=True),
+        # The same configuration with the halt rule off, so the damage that
+        # rule prevents is a measured delta rather than an assertion. This is
+        # the pair that replaced this project's old "compensation is worse than
+        # doing nothing" finding, which turned out to be a bug in the unwind.
+        "+ compensation, unwinding blindly": replace(
+            BASELINE,
+            compensate_on_failure=True,
+            halt_unwind_at_uncompensatable=False,
+        ),
         "+ preconditions only": replace(BASELINE, enforce_preconditions=True),
         "+ compensation+reconcile": replace(
             BASELINE, compensate_on_failure=True, reconcile=True
@@ -92,7 +101,13 @@ async def main(episodes: int, out: Path) -> None:
     results["ablation"] = ablation_rows
 
     print("=== 3. Unwinding past the point of no return ===")
-    blind = replace(RUNTIME, respect_point_of_no_return=False)
+    # Both guards off: the halt rule alone already stops a blind unwind at the
+    # notification, so leaving it on would hide what the PONR rule was for.
+    blind = replace(
+        RUNTIME,
+        respect_point_of_no_return=False,
+        halt_unwind_at_uncompensatable=False,
+    )
     pnr_rows = []
     for rate in (0.45, STRESS_RATE, 0.75):
         for label, config in (

@@ -28,6 +28,7 @@ The protections, and what each defends against:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import random
 from dataclasses import dataclass
 from typing import Any
@@ -85,7 +86,17 @@ class ToolClient:
         self._order_id = order_id
         # Seeded from the episode so jitter is reproducible too. Unseeded
         # jitter would make a "deterministic" episode only mostly deterministic.
-        self._rng = rng or random.Random(hash(order_id) & 0xFFFF)
+        #
+        # Hashed with blake2b rather than `hash()`: Python salts string hashing
+        # per process (PYTHONHASHSEED), so the "reproducible" seed this comment
+        # promised was in fact different in every interpreter. It did not show
+        # up because sweeps run with time_scale=0 and throw the backoff away —
+        # a comment that was wrong in exactly the situation nobody checked.
+        self._rng = rng or random.Random(
+            int.from_bytes(
+                hashlib.blake2b(order_id.encode(), digest_size=8).digest(), "big"
+            )
+        )
         self.trace: list[ToolCall] = []
         self.retries: int = 0
 
